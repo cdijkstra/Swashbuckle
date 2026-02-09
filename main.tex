@@ -1,36 +1,45 @@
 \documentclass{beamer}
 
 \usetheme{Madrid}
-\usecolortheme{seahorse}
+\useoutertheme[subsection=false]{miniframes}
+\setbeamertemplate{footline}{}
 
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{tikz}
 \usepackage{xcolor}
+\usepackage{tcolorbox}
+\tcbuselibrary{listings,skins}
 
 \definecolor{darkgreen}{RGB}{0,100,0} % darker than default green
 
 \logo{\includegraphics[height=0.6cm]{Images/cloudRepublic.png}}
 
-% \lstset{
-%   language=CSharp,
-%   keywordstyle=\color{blue},
-%   emph={AddSwaggerGen,UseSwagger,UseSwaggerUI,WithOpenApi,AddEndpointsApiExplorer},
-%   emphstyle=\color{darkgreen}\bfseries
-% }
+\newtcblisting{codebox}{
+  listing engine=listings,
+  colback=codegray,
+  colframe=black,
+  listing only,
+  enhanced,
+  boxrule=0.5pt,
+  sharp corners=northwest,
+  sharp corners=southeast,
+  rounded corners=southwest northeast,
+  arc=10pt,
+  left=4pt,
+  right=4pt,
+  top=4pt,
+  bottom=4pt
+}
 
 \lstset{
-  language=CSharp,
-  % Emphasis groups
   emph={AddOpenApi,MapOpenApi},
   emphstyle=\color{blue}\bfseries,
-  emph={[2]AddSwaggerGen,UseSwagger,UseSwaggerUI},
+  emph={[2]AddEndpointsApiExplorer,AddSwaggerGen,UseSwagger,UseSwaggerUI,WithOpenApi},
   emphstyle={[2]\color{darkgreen}\bfseries},
-  % Layout
   backgroundcolor=\color{codegray},
   basicstyle=\ttfamily\small,
-  frame=single,
   breaklines=true,
   showstringspaces=false
 }
@@ -46,12 +55,9 @@
 
 \titlepagecustom
 
-\begin{frame}
-  \centering
-  \includegraphics[width=\linewidth,height=0.85\textheight,keepaspectratio]{Images/swashbuckle.jpg}
-\end{frame}
+\section{Introduction}
 
-\begin{frame}{How We Got Here}
+\begin{frame}{Why should we care?}
 Swashbuckle
 \begin{itemize}
     \item Shipped by default in earlier .NET versions
@@ -73,8 +79,10 @@ Swashbuckle
     \end{itemize} 
 \end{frame}
 
-\begin{frame}[fragile]{Minimal OpenAPI Setup}
-\begin{lstlisting}[language=CSharp]
+\section{Openapi generation}
+
+\begin{frame}[fragile]{Minimal OpenAPI Setup (.NET 8)}
+\begin{codebox}
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -86,26 +94,56 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapGet("/hello", () => "Hello world!")
-.WithOpenApi();
+app.MapGet("/hello", () => "Hello world!").WithOpenApi();
 
 app.Run();
-\end{lstlisting}
+\end{codebox}
 \end{frame}
 
-\begin{frame}[fragile]{Minimal OpenAPI Setup}
-\begin{lstlisting}[language=CSharp]
+\begin{frame}[fragile]{Minimal OpenAPI Setup (.NET 10)}
+\begin{codebox}
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+
 app.MapGet("/hello", () => "Hello world!");
-app.MapOpenApi();
 
 app.Run();
-\end{lstlisting}
+\end{codebox}
 \end{frame}
 
+\begin{frame}[fragile]{OpenAPI specs}
+\begin{itemize}
+    \item In .NET 8, `AddEndpointsApiExplorer()' was needed for Swashbuckle to detect minimal API endpoints. In .NET 10, the framework    automatically generates OpenAPI metadata.
+    \item .NET 8 \begin{codebox}
+        OpenApi: (...)/swagger/v1/swagger.json
+        UI: (...)/swagger/index.html
+    \end{codebox}
+    \item .NET 10 \begin{codebox}
+        OpenApi: (...)/openapi/v1.json
+        UI: [404]
+    \end{codebox}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{OpenAPI Changes in .NET 10}
+\begin{itemize}
+    \item \textbf{OpenAPI version:} 3.0 $\to$ 3.1
+    \item \textbf{Data annotations:} 
+        \begin{itemize}
+            \item \texttt{[Required]} fields now appear in OpenAPI as \texttt{"required": [...]} 
+        \end{itemize}
+    \item \textbf{Servers section:} added by default in OpenAPI 3.1
+    \item \textbf{Summary:} OpenAPI 3.1 brings better JSON Schema alignment, but some constraints from .NET attributes require transformers for full representation
+\end{itemize}
+\end{frame}
+
+\section{Openapi UI}
 \begin{frame}{OpenAPI $\neq$ Swagger UI}
 \begin{itemize}
   \item Swagger UI is just one OpenAPI consumer
@@ -135,14 +173,6 @@ app.MapScalarApiReference(options =>
         .WithTheme(ScalarTheme.Blue);
 });
 \end{lstlisting}
-\end{frame}
-
-\begin{frame}{Swashbuckle vs Native OpenAPI}
-\begin{itemize}
-  \item Swagger UI bundled → UI is optional
-  \item Schema \& operation filters → transformers
-  \item OpenAPI 3.0 → OpenAPI 3.1
-\end{itemize}
 \end{frame}
 
 \begin{frame}{.NET 10 OpenAPI Highlights}
@@ -198,6 +228,11 @@ options.AddDocumentTransformer((document, context) =>
   \end{itemize}
   \item Swashbuckle is optional; not gone. Alternatives like scalar can also be used.
 \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \centering
+  \includegraphics[width=\linewidth,height=0.85\textheight,keepaspectratio]{Images/swashbuckle.jpg}
 \end{frame}
 
 \tussenslide
