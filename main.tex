@@ -1,0 +1,211 @@
+\documentclass{beamer}
+
+\usetheme{Madrid}
+\usecolortheme{seahorse}
+
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{xcolor}
+
+\definecolor{darkgreen}{RGB}{0,100,0} % darker than default green
+
+\logo{\includegraphics[height=0.6cm]{Images/cloudRepublic.png}}
+
+% \lstset{
+%   language=CSharp,
+%   keywordstyle=\color{blue},
+%   emph={AddSwaggerGen,UseSwagger,UseSwaggerUI,WithOpenApi,AddEndpointsApiExplorer},
+%   emphstyle=\color{darkgreen}\bfseries
+% }
+
+\lstset{
+  language=CSharp,
+  % Emphasis groups
+  emph={AddOpenApi,MapOpenApi},
+  emphstyle=\color{blue}\bfseries,
+  emph={[2]AddSwaggerGen,UseSwagger,UseSwaggerUI},
+  emphstyle={[2]\color{darkgreen}\bfseries},
+  % Layout
+  backgroundcolor=\color{codegray},
+  basicstyle=\ttfamily\small,
+  frame=single,
+  breaklines=true,
+  showstringspaces=false
+}
+
+\input{commands.tex}
+
+\title{Farewell Swashbuckle}
+\subtitle{Navigating .NET 10’s New OpenAPI Waters}
+\author{Casper Dijkstra}
+\date{February 10th, 2026}
+
+\begin{document}
+
+\titlepagecustom
+
+\begin{frame}
+  \centering
+  \includegraphics[width=\linewidth,height=0.85\textheight,keepaspectratio]{Images/swashbuckle.jpg}
+\end{frame}
+
+\begin{frame}{How We Got Here}
+Swashbuckle
+\begin{itemize}
+    \item Shipped by default in earlier .NET versions
+    \item Generated the OpenAPI spec and hosted the Swagger UI
+    \item Third-party dependency with opinionated defaults
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{.NET 9 Changed the Defaults}
+    \begin{itemize}
+      \item OpenAPI specs are now generated natively,
+    
+      \item NuGet
+          \begin{verbatim}
+              Microsoft.AspNetCore.OpenApi
+          \end{verbatim}
+        ships as part of the ASP.NET Core shared framework in .NET 9 and later. You typically do not need to add a package reference,
+     \item Microsoft intentionally stopped shipping a UI out of the box.
+    \end{itemize} 
+\end{frame}
+
+\begin{frame}[fragile]{Minimal OpenAPI Setup}
+\begin{lstlisting}[language=CSharp]
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.MapGet("/hello", () => "Hello world!")
+.WithOpenApi();
+
+app.Run();
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Minimal OpenAPI Setup}
+\begin{lstlisting}[language=CSharp]
+builder.Services.AddOpenApi();
+
+var app = builder.Build();
+
+app.MapGet("/hello", () => "Hello world!");
+app.MapOpenApi();
+
+app.Run();
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}{OpenAPI $\neq$ Swagger UI}
+\begin{itemize}
+  \item Swagger UI is just one OpenAPI consumer
+  \item Separation of concerns:
+    \begin{itemize}
+      \item OpenAPI document generation
+      \item UI and presentation
+    \end{itemize}
+  \item You choose the UI that fits your team
+\end{itemize}
+\end{frame}
+
+\begin{frame}{UI Options}
+\begin{enumerate}
+    \item Swagger UI (still works)
+    \item \textcolor{darkgreen}{Scalar; modern, clean, developer-first $\leftarrow$ I'll show this one} 
+    \item Redoc or custom tooling
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]{Using Scalar}
+\begin{lstlisting}[language=CSharp]
+app.MapScalarApiReference(options =>
+{
+    options
+        .WithTitle("My API")
+        .WithTheme(ScalarTheme.Blue);
+});
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}{Swashbuckle vs Native OpenAPI}
+\begin{itemize}
+  \item Swagger UI bundled → UI is optional
+  \item Schema \& operation filters → transformers
+  \item OpenAPI 3.0 → OpenAPI 3.1
+\end{itemize}
+\end{frame}
+
+\begin{frame}{.NET 10 OpenAPI Highlights}
+\begin{itemize}
+  \item OpenAPI 3.1 support
+  \item Better JSON Schema alignment
+  \item Multiple output formats (JSON, YAML)
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Endpoint Transformer Example}
+\begin{lstlisting}[language=CSharp]
+builder.Services.AddOpenApi(options =>
+{
+    options.AddEndpointTransformer((context, description) =>
+    {
+        if (context.HttpMethod == "DELETE")
+        {
+            description.Deprecated = true;
+        }
+    });
+});
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Document Transformer Example}
+\begin{lstlisting}[language=CSharp]
+options.AddDocumentTransformer((document, context) =>
+{
+    document.Info.Description =
+        context.Environment.IsProduction()
+            ? "Public API"
+            : "Internal / Development API";
+});
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}{The New Mental Model}
+\begin{itemize}
+  \item Endpoints generate OpenAPI
+  \item Transformers shape the document
+  \item UI renders the experience
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Key Takeaways}
+\begin{itemize}
+  \item Native OpenAPI is lighter and more flexible
+  \item Document and endpoint transformers allow us to tailor our OpenApi specs
+  \begin{itemize}
+      \item Mark API deprecated
+      \item Only public/private APIs in document
+  \end{itemize}
+  \item Swashbuckle is optional; not gone. Alternatives like scalar can also be used.
+\end{itemize}
+\end{frame}
+
+\tussenslide
+{
+    Questions?
+}
+{
+    Feedback?
+}
+
+\end{document}

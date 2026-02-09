@@ -1,0 +1,74 @@
+\definecolor{BrandBlue}{RGB}{12, 34, 64}       % deep navy
+\definecolor{BrandBlueLight}{RGB}{28, 63, 110} % overlay blue
+\definecolor{BrandAccent}{RGB}{243, 117, 33}  % orange accent
+
+\definecolor{codegray}{rgb}{0.95,0.95,0.95}
+
+
+\newcommand{\tussenslide}[2]{
+{
+\setbeamercolor{background canvas}{bg=BrandBlue}
+
+\begin{frame}[plain]
+\begin{tikzpicture}[remember picture,overlay]
+
+% Right-side overlay shape
+\fill[BrandBlueLight, opacity=0.35]
+  (current page.north east) --
+  ([xshift=-4cm]current page.north east) --
+  ([xshift=-2cm]current page.south east) --
+  (current page.south east) -- cycle;
+
+\end{tikzpicture}
+
+\vfill
+\centering
+
+{\color{white}\Huge\bfseries #1}
+
+\vspace{1em}
+
+{\color{BrandAccent}\small\uppercase{#2}}
+
+\vfill
+\end{frame}
+}
+}
+
+\newcommand{\titlepagecustom}{
+{
+\setbeamercolor{background canvas}{bg=BrandBlue}
+
+\begin{frame}[plain]
+\begin{tikzpicture}[remember picture,overlay]
+
+% Right-side overlay shape
+\fill[BrandBlueLight, opacity=0.35]
+  (current page.north east) --
+  ([xshift=-5cm]current page.north east) --
+  ([xshift=-2cm]current page.south east) --
+  (current page.south east) -- cycle;
+
+\end{tikzpicture}
+
+\vfill
+\centering
+
+{\color{white}\Huge\bfseries \inserttitle}
+
+\vspace{0.8em}
+
+{\color{BrandAccent}\large \insertsubtitle}
+
+\vspace{2em}
+
+{\color{white}\large \insertauthor}
+
+\vspace{0.5em}
+
+{\color{white}\small \insertdate}
+
+\vfill
+\end{frame}
+}
+}
