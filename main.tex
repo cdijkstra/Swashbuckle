@@ -34,7 +34,7 @@
 }
 
 \lstset{
-  emph={AddOpenApi,MapOpenApi},
+  emph={AddOpenApi,MapOpenApi,AddDocumentTransformer,AddOperationTransformer,AddSchemaTransformer},
   emphstyle=\color{blue}\bfseries,
   emph={[2]AddEndpointsApiExplorer,AddSwaggerGen,UseSwagger,UseSwaggerUI,WithOpenApi},
   emphstyle={[2]\color{darkgreen}\bfseries},
@@ -57,6 +57,17 @@
 
 \section{Introduction}
 
+\begin{frame}[fragile]
+\begin{codebox}
+Farewell Swashbuckle
+
+We're breaking up.
+It's not you, it's me... 
+Actually, it's .NET 10.
+\end{codebox}
+
+\end{frame}
+
 \begin{frame}{Why should we care?}
 Swashbuckle
 \begin{itemize}
@@ -64,17 +75,24 @@ Swashbuckle
     \item Generated the OpenAPI spec and hosted the Swagger UI
     \item Third-party dependency with opinionated defaults
 \end{itemize}
+
+\pause
+
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.33]{Images/Conversation.png}
+\end{figure}
 \end{frame}
 
 \begin{frame}[fragile]{.NET 9 Changed the Defaults}
     \begin{itemize}
-      \item OpenAPI specs are now generated natively,
+      \item OpenAPI specs are now generated natively.
     
       \item NuGet
           \begin{verbatim}
               Microsoft.AspNetCore.OpenApi
           \end{verbatim}
-        ships as part of the ASP.NET Core shared framework in .NET 9 and later. You typically do not need to add a package reference,
+        ships as part of the ASP.NET Core shared framework in .NET 9 and later. You typically do not need to add a package reference.
      \item Microsoft intentionally stopped shipping a UI out of the box.
     \end{itemize} 
 \end{frame}
@@ -139,12 +157,78 @@ app.Run();
             \item \texttt{[Required]} fields now appear in OpenAPI as \texttt{"required": [...]} 
         \end{itemize}
     \item \textbf{Servers section:} added by default in OpenAPI 3.1
-    \item \textbf{Summary:} OpenAPI 3.1 brings better JSON Schema alignment, but some constraints from .NET attributes require transformers for full representation
+    \item \textbf{Summary:} OpenAPI 3.1 brings better JSON Schema alignment. Still some constraints from .NET attributes require transformers for full representation
+    \item You can still obtain 3.0 output if you really want
 \end{itemize}
 \end{frame}
 
+\section{Transformers}
+\begin{frame}[fragile]{Transformers}
+Three kinds of Transformers can be used within builder.Services.AddOpenApi
+
+\begin{codebox}
+    AddDocumentTransformer(),
+    AddSchemaTransformer(),
+    AddOperationTransformer()
+\end{codebox}
+
+\end{frame}
+
+\begin{frame}[fragile]{Document Transformers}
+Applies transformations globally. Set title, description, version, etc
+\begin{codebox}
+builder.Services.AddOpenApi("admin", options =>
+{
+    options.AddDocumentTransformer((document, _, _) =>
+        {
+            document.Info.Title = "Admin API";
+            document.Info.Description = "Internal endpoints";
+
+            return Task.CompletedTask;
+        });
+});
+\end{codebox}
+
+\end{frame}
+
+
+\begin{frame}[fragile]{Operation Transformers}
+Applies transformations per operation. Set tags, deprecations, etc
+
+\begin{codebox}
+    options.AddOperationTransformer((operation, context, _) =>
+    {
+        if (context.Description.RelativePath!.EndsWith("/v1"))
+        {
+            operation.Deprecated = true;
+        }
+        return Task.CompletedTask;
+    });
+\end{codebox}
+
+\end{frame}
+
+
+\begin{frame}[fragile]{Schema Transformers}
+Applies transformations per schema. Adjust data type, apply constraints, add description
+
+\begin{codebox}
+foreach (var prop in context.Type.GetProperties())
+{
+    var maxLen = prop.GetCustomAttributes(typeof(MaxLengthAttribute), true)
+         .Cast<MaxLengthAttribute>()
+         .FirstOrDefault();
+    if (maxLen != null && schema.Properties.ContainsKey(prop.Name))
+    {
+        schema.Properties[prop.Name].MaxLength = maxLen.Length;
+    }
+}
+return Task.CompletedTask;
+\end{codebox}
+\end{frame}
+
 \section{Openapi UI}
-\begin{frame}{OpenAPI $\neq$ Swagger UI}
+\begin{frame}{Interacting with the APIs}
 \begin{itemize}
   \item Swagger UI is just one OpenAPI consumer
   \item Separation of concerns:
@@ -159,80 +243,45 @@ app.Run();
 \begin{frame}{UI Options}
 \begin{enumerate}
     \item Swagger UI (still works)
+    \item Redoc
     \item \textcolor{darkgreen}{Scalar; modern, clean, developer-first $\leftarrow$ I'll show this one} 
-    \item Redoc or custom tooling
 \end{enumerate}
 \end{frame}
 
 \begin{frame}[fragile]{Using Scalar}
-\begin{lstlisting}[language=CSharp]
+\begin{codebox}
+using Scalar.AspNetCore;
+
+(...)
+
 app.MapScalarApiReference(options =>
 {
     options
         .WithTitle("My API")
         .WithTheme(ScalarTheme.Blue);
 });
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}{.NET 10 OpenAPI Highlights}
-\begin{itemize}
-  \item OpenAPI 3.1 support
-  \item Better JSON Schema alignment
-  \item Multiple output formats (JSON, YAML)
-\end{itemize}
-\end{frame}
-
-\begin{frame}[fragile]{Endpoint Transformer Example}
-\begin{lstlisting}[language=CSharp]
-builder.Services.AddOpenApi(options =>
-{
-    options.AddEndpointTransformer((context, description) =>
-    {
-        if (context.HttpMethod == "DELETE")
-        {
-            description.Deprecated = true;
-        }
-    });
-});
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{Document Transformer Example}
-\begin{lstlisting}[language=CSharp]
-options.AddDocumentTransformer((document, context) =>
-{
-    document.Info.Description =
-        context.Environment.IsProduction()
-            ? "Public API"
-            : "Internal / Development API";
-});
-\end{lstlisting}
+\end{codebox}
 \end{frame}
 
 \begin{frame}{The New Mental Model}
 \begin{itemize}
-  \item Endpoints generate OpenAPI
+  \item Endpoints generate OpenAPI automatically
   \item Transformers shape the document
   \item UI renders the experience
 \end{itemize}
 \end{frame}
 
+\section{Takeaways}
 \begin{frame}{Key Takeaways}
 \begin{itemize}
   \item Native OpenAPI is lighter and more flexible
   \item Document and endpoint transformers allow us to tailor our OpenApi specs
   \begin{itemize}
-      \item Mark API deprecated
       \item Only public/private APIs in document
+      \item Mark API deprecated
   \end{itemize}
   \item Swashbuckle is optional; not gone. Alternatives like scalar can also be used.
 \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \centering
-  \includegraphics[width=\linewidth,height=0.85\textheight,keepaspectratio]{Images/swashbuckle.jpg}
 \end{frame}
 
 \tussenslide
