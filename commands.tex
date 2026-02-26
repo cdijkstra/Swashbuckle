@@ -78,3 +78,23 @@
 \end{frame}
 }
 }
+
+\definecolor{CodeBg}{HTML}{F1F6FA}
+
+
+\newtcblisting{codebox}{
+  listing engine=listings,
+  colback=CodeBg,
+  colframe=black,
+  listing only,
+  enhanced,
+  boxrule=0.5pt,
+  sharp corners=northwest,
+  sharp corners=southeast,
+  rounded corners=southwest northeast,
+  arc=10pt,
+  left=4pt,
+  right=4pt,
+  top=4pt,
+  bottom=4pt
+}

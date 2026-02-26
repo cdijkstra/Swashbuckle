@@ -2,7 +2,21 @@
 
 \usetheme{Madrid}
 \useoutertheme[subsection=false]{miniframes}
-\setbeamertemplate{footline}{}
+
+\definecolor{TitleColor}{HTML}{143062}
+\definecolor{BodyColor}{HTML}{0d1f3f}
+
+\setbeamercolor{frametitle}{fg=TitleColor}
+\setbeamercolor{normal text}{fg=BodyColor}
+
+
+\setbeamertemplate{frametitle}{
+  \vspace{0.8em}
+  {\usebeamerfont{frametitle}\bfseries\Large\insertframetitle}
+  \par
+  \vspace{0.5em}
+}
+
 
 \usepackage{listings}
 \usepackage{xcolor}
@@ -12,26 +26,19 @@
 \usepackage{tcolorbox}
 \tcbuselibrary{listings,skins}
 
+\usepackage{fontspec}
+
+\setsansfont[
+    BoldFont = Montserrat Bold,
+    ItalicFont = Montserrat Italic,
+    BoldItalicFont = Montserrat Bold Italic
+]{Montserrat}
+
+\renewcommand{\familydefault}{\sfdefault}
+
 \definecolor{darkgreen}{RGB}{0,100,0} % darker than default green
 
 \logo{\includegraphics[height=0.6cm]{Images/cloudRepublic.png}}
-
-\newtcblisting{codebox}{
-  listing engine=listings,
-  colback=codegray,
-  colframe=black,
-  listing only,
-  enhanced,
-  boxrule=0.5pt,
-  sharp corners=northwest,
-  sharp corners=southeast,
-  rounded corners=southwest northeast,
-  arc=10pt,
-  left=4pt,
-  right=4pt,
-  top=4pt,
-  bottom=4pt
-}
 
 \lstset{
   emph={AddOpenApi,MapOpenApi,AddDocumentTransformer,AddOperationTransformer,AddSchemaTransformer},
@@ -49,15 +56,52 @@
 \title{Farewell Swashbuckle}
 \subtitle{Navigating .NET 10’s New OpenAPI Waters}
 \author{Casper Dijkstra}
-\date{February 10th, 2026}
+\date{February 27th, 2026}
 
 \begin{document}
 
 \titlepagecustom
 
-\section{Introduction}
+\section{Setting the scene}
 
-\begin{frame}[fragile]
+% \begin{frame}{What did Swashbuckle do again?}
+% \begin{codebox}
+% Swashbuckle, A popular NuGet package for .NET that automatically generates OpenAPI (Swagger) specifications and hosts a Swagger UI.
+% \end{codebox}
+% \end{frame}
+
+\begin{frame}{Swashbuckle – The Good}
+Swashbuckle
+\begin{itemize}
+    \item Popular NuGet package for .NET
+    \item \textbf{Shipped by default} in project templates before .NET 9
+    \pause
+    \item Two responsibilities
+    \begin{itemize}
+        \item \textbf{Generates OpenAPI specs} (called "Swagger" specs)
+        \item Hosts the famous \textbf{Swagger UI}
+    \end{itemize}
+    \item Works with Minimal APIs and Controllers.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{Swashbuckle – The Limitations}
+Swashbuckle
+\begin{itemize}
+    \item Relies on \textbf{reflection} to inspect \textit{controllers, endpoints, models}
+    \item Reads compiled assemblies at \textbf{runtime} to build the OpenAPI spec
+    \item Slower startup for large projects; can miss custom attributes
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Swashbuckle – Now}
+Swashbuckle
+\begin{itemize}
+    \item No longer shipped by default in .NET
+    \item Can still be included in  your projects
+\end{itemize}
+\pause
 \begin{codebox}
 Farewell Swashbuckle
 
@@ -65,23 +109,22 @@ We're breaking up.
 It's not you, it's me... 
 Actually, it's .NET 10.
 \end{codebox}
-
 \end{frame}
 
-\begin{frame}{Why should we care?}
+\begin{frame}[fragile]{Swashbuckle – Now}
 Swashbuckle
 \begin{itemize}
-    \item Shipped by default in earlier .NET versions
-    \item Generated the OpenAPI spec and hosted the Swagger UI
-    \item Third-party dependency with opinionated defaults
+    \item No longer shipped by default in .NET
+    \item Can still be included in  your projects
 \end{itemize}
-
 \pause
+\begin{codebox}
+Farewell Swashbuckle
 
-\begin{figure}
-    \centering
-    \includegraphics[scale=0.33]{Images/Conversation.png}
-\end{figure}
+We're breaking up.
+It's not you, it's me... 
+Actually, it's .NET 10.
+\end{codebox}
 \end{frame}
 
 \begin{frame}[fragile]{.NET 9 Changed the Defaults}
@@ -92,7 +135,7 @@ Swashbuckle
           \begin{verbatim}
               Microsoft.AspNetCore.OpenApi
           \end{verbatim}
-        ships as part of the ASP.NET Core shared framework in .NET 9 and later. You typically do not need to add a package reference.
+        ships as part of the ASP.NET Core shared framework in .NET 9 and later.`
      \item Microsoft intentionally stopped shipping a UI out of the box.
     \end{itemize} 
 \end{frame}
@@ -127,6 +170,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    // Choice of UI
 }
 
 app.MapGet("/hello", () => "Hello world!");
@@ -135,9 +179,15 @@ app.Run();
 \end{codebox}
 \end{frame}
 
+\begin{frame}
+\begin{itemize}
+    \item In .NET 8, `AddEndpointsApiExplorer()' was needed for Swashbuckle to detect minimal API endpoints. 
+    \item In .NET 10, the framework automatically generates OpenAPI metadata.
+\end{itemize}
+\end{frame}
+
 \begin{frame}[fragile]{OpenAPI specs}
 \begin{itemize}
-    \item In .NET 8, `AddEndpointsApiExplorer()' was needed for Swashbuckle to detect minimal API endpoints. In .NET 10, the framework    automatically generates OpenAPI metadata.
     \item .NET 8 \begin{codebox}
         OpenApi: (...)/swagger/v1/swagger.json
         UI: (...)/swagger/index.html
@@ -151,16 +201,30 @@ app.Run();
 
 \begin{frame}{OpenAPI Changes in .NET 10}
 \begin{itemize}
-    \item \textbf{OpenAPI version:} 3.0 $\to$ 3.1
-    \item \textbf{Data annotations:} 
+    \item \textbf{OpenAPI generator defaults to 3.1}
+    \item Key Benefits:
         \begin{itemize}
-            \item \texttt{[Required]} fields now appear in OpenAPI as \texttt{"required": [...]} 
+            \item Full JSON Schema support
+            \item Stronger type validation
+            \item Clearer required/optional fields
         \end{itemize}
-    \item \textbf{Servers section:} added by default in OpenAPI 3.1
-    \item \textbf{Summary:} OpenAPI 3.1 brings better JSON Schema alignment. Still some constraints from .NET attributes require transformers for full representation
-    \item You can still obtain 3.0 output if you really want
 \end{itemize}
 \end{frame}
+
+\begin{frame}{OpenAPI Changes in .NET 10}
+\begin{itemize}
+    \item \textbf{OpenAPI generator defaults to 3.1}
+    \item You however want to stick to 3.0 when working with API Management 
+\end{itemize}
+\begin{center}
+    \includegraphics[scale=0.2]{Images/carbon.png}
+\end{center}
+\end{frame}
+
+\begin{frame}
+    <OpenApiGenerateDocumentsOptions>--openapi-version OpenApi3_1</OpenApiGenerateDocumentsOptions>
+\end{frame}
+
 
 \section{Transformers}
 \begin{frame}[fragile]{Transformers}
@@ -205,7 +269,6 @@ Applies transformations per operation. Set tags, deprecations, etc
         return Task.CompletedTask;
     });
 \end{codebox}
-
 \end{frame}
 
 
@@ -225,6 +288,7 @@ foreach (var prop in context.Type.GetProperties())
 }
 return Task.CompletedTask;
 \end{codebox}
+Or determine which endpoints should be included in the openapi spec.
 \end{frame}
 
 \section{Openapi UI}
@@ -280,7 +344,7 @@ app.MapScalarApiReference(options =>
       \item Only public/private APIs in document
       \item Mark API deprecated
   \end{itemize}
-  \item Swashbuckle is optional; not gone. Alternatives like scalar can also be used.
+  \item Swashbuckle is still optional; however, I recommend using a more modern alternative such as Scalar.
 \end{itemize}
 \end{frame}
 
