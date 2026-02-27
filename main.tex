@@ -24,6 +24,8 @@
 \usepackage{tikz}
 \usepackage{xcolor}
 \usepackage{tcolorbox}
+\usepackage{animate}
+\usepackage{xstring} % for substring handling
 \tcbuselibrary{listings,skins}
 
 \usepackage{fontspec}
@@ -64,12 +66,6 @@
 
 \section{Setting the scene}
 
-% \begin{frame}{What did Swashbuckle do again?}
-% \begin{codebox}
-% Swashbuckle, A popular NuGet package for .NET that automatically generates OpenAPI (Swagger) specifications and hosts a Swagger UI.
-% \end{codebox}
-% \end{frame}
-
 \begin{frame}{Swashbuckle – The Good}
 Swashbuckle
 \begin{itemize}
@@ -86,7 +82,7 @@ Swashbuckle
 \end{frame}
 
 
-\begin{frame}{Swashbuckle – The Limitations}
+\begin{frame}{Swashbuckle – The Bad}
 Swashbuckle
 \begin{itemize}
     \item Relies on \textbf{reflection} to inspect \textit{controllers, endpoints, models}
@@ -95,29 +91,15 @@ Swashbuckle
 \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{Swashbuckle – Now}
+\begin{frame}[fragile]{Swashbuckle – The Status}
 Swashbuckle
 \begin{itemize}
     \item No longer shipped by default in .NET
-    \item Can still be included in  your projects
+    \item \textit{Can} still be included in  your projects
+    \pause
+    \item But let's break old habits ;) 
 \end{itemize}
-\pause
-\begin{codebox}
-Farewell Swashbuckle
 
-We're breaking up.
-It's not you, it's me... 
-Actually, it's .NET 10.
-\end{codebox}
-\end{frame}
-
-\begin{frame}[fragile]{Swashbuckle – Now}
-Swashbuckle
-\begin{itemize}
-    \item No longer shipped by default in .NET
-    \item Can still be included in  your projects
-\end{itemize}
-\pause
 \begin{codebox}
 Farewell Swashbuckle
 
@@ -129,18 +111,20 @@ Actually, it's .NET 10.
 
 \begin{frame}[fragile]{.NET 9 Changed the Defaults}
     \begin{itemize}
-      \item OpenAPI specs are now generated natively.
+      \item \textbf{OpenAPI Docs} are now generated natively.
     
       \item NuGet
           \begin{verbatim}
               Microsoft.AspNetCore.OpenApi
           \end{verbatim}
-        ships as part of the ASP.NET Core shared framework in .NET 9 and later.`
-     \item Microsoft intentionally stopped shipping a UI out of the box.
+        ships as part of the ASP.NET Core shared framework since .NET 9
+    \pause
+     \item \textbf{OpenAPI UI}: Microsoft intentionally stopped shipping a UI out of the box.
     \end{itemize} 
 \end{frame}
 
-\section{Openapi generation}
+\section{Document generation}
+\tussenslide{OpenAPI Generation}
 
 \begin{frame}[fragile]{Minimal OpenAPI Setup (.NET 8)}
 \begin{codebox}
@@ -179,11 +163,16 @@ app.Run();
 \end{codebox}
 \end{frame}
 
-\begin{frame}
+\begin{frame}{Document generation}
 \begin{itemize}
     \item In .NET 8, `AddEndpointsApiExplorer()' was needed for Swashbuckle to detect minimal API endpoints. 
-    \item In .NET 10, the framework automatically generates OpenAPI metadata.
+    \item In .NET 10, the framework automatically generates OpenAPI metadata at build-time.
+    \pause
+    \item This also applies to controllers!
 \end{itemize}
+\begin{center}
+    \includegraphics[scale=0.2]{Images/carbon (5).png}
+\end{center}
 \end{frame}
 
 \begin{frame}[fragile]{OpenAPI specs}
@@ -197,6 +186,19 @@ app.Run();
         UI: [404]
     \end{codebox}
 \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{OpenAPI specs}
+\begin{itemize}
+    \item .NET 10 \begin{codebox}
+        OpenApi: (...)/openapi/v1.json
+        UI: [404]
+    \end{codebox}
+\end{itemize}
+Or have the document created in your codebase!
+\begin{center}
+    \includegraphics[scale=0.2]{Images/buildGeneration.png}
+\end{center}
 \end{frame}
 
 \begin{frame}{OpenAPI Changes in .NET 10}
@@ -221,12 +223,10 @@ app.Run();
 \end{center}
 \end{frame}
 
-\begin{frame}
-    <OpenApiGenerateDocumentsOptions>--openapi-version OpenApi3_1</OpenApiGenerateDocumentsOptions>
-\end{frame}
+
+\tussenslide{Transformers}
 
 
-\section{Transformers}
 \begin{frame}[fragile]{Transformers}
 Three kinds of Transformers can be used within builder.Services.AddOpenApi
 
@@ -275,41 +275,52 @@ Applies transformations per operation. Set tags, deprecations, etc
 \begin{frame}[fragile]{Schema Transformers}
 Applies transformations per schema. Adjust data type, apply constraints, add description
 
-\begin{codebox}
-foreach (var prop in context.Type.GetProperties())
-{
-    var maxLen = prop.GetCustomAttributes(typeof(MaxLengthAttribute), true)
-         .Cast<MaxLengthAttribute>()
-         .FirstOrDefault();
-    if (maxLen != null && schema.Properties.ContainsKey(prop.Name))
-    {
-        schema.Properties[prop.Name].MaxLength = maxLen.Length;
-    }
-}
-return Task.CompletedTask;
-\end{codebox}
-Or determine which endpoints should be included in the openapi spec.
+Or determine which endpoints should be included in the Openapi spec.
 \end{frame}
 
 \section{Openapi UI}
+\tussenslide{OpenAPI UI}
+
 \begin{frame}{Interacting with the APIs}
 \begin{itemize}
-  \item Swagger UI is just one OpenAPI consumer
   \item Separation of concerns:
     \begin{itemize}
       \item OpenAPI document generation
       \item UI and presentation
     \end{itemize}
+  \pause
+  \item Swagger UI is just one OpenAPI consumer
   \item You choose the UI that fits your team
 \end{itemize}
 \end{frame}
 
 \begin{frame}{UI Options}
 \begin{enumerate}
+    \item \textcolor{darkgreen}{Swagger UI} (still works)
+\end{enumerate}
+\begin{center}
+    \includegraphics[scale=0.22]{Images/swaggerUi.png}
+\end{center}
+Import the SwaggerUI-specific package and pass it your openapi file.
+\end{frame}
+
+\begin{frame}{UI Options}
+\begin{enumerate}
+    \item Swagger UI (still works)
+    \item \textcolor{darkgreen}{Redoc}
+\end{enumerate}
+Clean and elegant \textbf{read-only} interface for API documentation
+\end{frame}
+
+
+\begin{frame}{UI Options}
+\begin{enumerate}
     \item Swagger UI (still works)
     \item Redoc
-    \item \textcolor{darkgreen}{Scalar; modern, clean, developer-first $\leftarrow$ I'll show this one} 
+    \item \textcolor{darkgreen}{Scalar} 
 \end{enumerate}
+Modern, clean \textbf{interactive UI}.
+Comes with a \textbf{code snippet generator}.
 \end{frame}
 
 \begin{frame}[fragile]{Using Scalar}
@@ -327,15 +338,13 @@ app.MapScalarApiReference(options =>
 \end{codebox}
 \end{frame}
 
-\begin{frame}{The New Mental Model}
-\begin{itemize}
-  \item Endpoints generate OpenAPI automatically
-  \item Transformers shape the document
-  \item UI renders the experience
-\end{itemize}
+\section{Takeaways}
+\begin{frame}
+    \begin{center}
+        \includegraphics[scale=0.2]{Images/goodbye.png}
+    \end{center}
 \end{frame}
 
-\section{Takeaways}
 \begin{frame}{Key Takeaways}
 \begin{itemize}
   \item Native OpenAPI is lighter and more flexible
@@ -344,16 +353,16 @@ app.MapScalarApiReference(options =>
       \item Only public/private APIs in document
       \item Mark API deprecated
   \end{itemize}
-  \item Swashbuckle is still optional; however, I recommend using a more modern alternative such as Scalar.
+  \item Swagger can still be used; however, I recommend breaking up and using Scalar.
 \end{itemize}
 \end{frame}
 
-\tussenslide
-{
-    Questions?
-}
-{
-    Feedback?
-}
+\begin{frame}{Key Takeaways}
+\begin{itemize}
+  \item OpenAPI generated at build-time without reflection
+  \item Transformers allow you to tweak the document
+  \item UI renders the experience
+\end{itemize}
+\end{frame}
 
 \end{document}
