@@ -40,22 +40,14 @@
 
 \newcommand{\titlepagecustom}{
 {
-\setbeamercolor{background canvas}{bg=BrandBlue}
+\usebackgroundtemplate{
+    \includegraphics[
+        width=\paperwidth,
+        height=\paperheight
+    ]{Images/tussenslide.png}
+}
 
 \begin{frame}[plain]
-\begin{tikzpicture}[remember picture,overlay]
-
-% Right-side overlay shape
-\fill[BrandBlueLight, opacity=0.35]
-  (current page.north east) --
-  ([xshift=-5cm]current page.north east) --
-  ([xshift=-2cm]current page.south east) --
-  (current page.south east) -- cycle;
-
-\node[anchor=south east, xshift=-1.5m, yshift=-2.3cm] at (current page.north east) 
-    {\includegraphics[height=2cm]{Images/Logo vierkant (thumbnail).png}};
-
-\end{tikzpicture}
 
 \vfill
 \centering
@@ -74,8 +66,12 @@
 
 {\color{white}\small \insertdate}
 
+\includegraphics[scale=0.2]{Images/Logo wit.png}
+
 \vfill
 \end{frame}
+
+\usebackgroundtemplate{} % reset background
 }
 }
 

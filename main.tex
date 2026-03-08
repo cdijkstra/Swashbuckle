@@ -17,10 +17,11 @@
   \vspace{0.5em}
 }
 
+\geometry{paperwidth=480, paperheight=270pt}
 
 \usepackage{listings}
 \usepackage{xcolor}
-\usepackage{graphicx}
+\usepackage{graphicx} 
 \usepackage{tikz}
 \usepackage{xcolor}
 \usepackage{tcolorbox}
@@ -117,7 +118,7 @@ Actually, it's .NET 10.
           \begin{verbatim}
               Microsoft.AspNetCore.OpenApi
           \end{verbatim}
-        ships as part of the ASP.NET Core shared framework since .NET 9
+        was introduced in the ASP.NET Core shared framework in .NET 9
     \pause
      \item \textbf{OpenAPI UI}: Microsoft intentionally stopped shipping a UI out of the box.
     \end{itemize} 
@@ -127,48 +128,43 @@ Actually, it's .NET 10.
 \tussenslide{OpenAPI Generation}
 
 \begin{frame}[fragile]{Minimal OpenAPI Setup (.NET 8)}
-\begin{codebox}
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+\begin{center}
+    \includegraphics[scale=0.18]{Images/net8.png}
+\end{center}
+\end{frame}
 
-var app = builder.Build();
+\begin{frame}{Minimal OpenAPI Setup (.NET 8)}
+\begin{itemize}
+    \item AddEndpointsApiExplorer() → Discovers Minimal API endpoints and exposes their metadata for tools like OpenAPI.
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+  \item AddSwaggerGen() → Generates the OpenAPI/Swagger JSON document at runtime using reflection.
 
-app.MapGet("/hello", () => "Hello world!").WithOpenApi();
+  \item UseSwagger() → Serves the generated OpenAPI JSON document over HTTP.
 
-app.Run();
-\end{codebox}
+  \item UseSwaggerUI() → Serves the interactive Swagger UI to browse and test the API.
+\end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]{Minimal OpenAPI Setup (.NET 10)}
-\begin{codebox}
-builder.Services.AddOpenApi();
-
-var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    // Choice of UI
-}
-
-app.MapGet("/hello", () => "Hello world!");
-
-app.Run();
-\end{codebox}
+\begin{center}
+    \includegraphics[scale=0.2]{Images/net10.png}
+\end{center}
 \end{frame}
 
-\begin{frame}{Document generation}
+\begin{frame}{Minimal OpenAPI Setup (.NET 10)}
+\begin{itemize}
+    \item AddOpenApi() → Registers OpenAPI document generation and optional transformers for Minimal APIs or controllers.
+
+  \item MapOpenApi() → Maps an endpoint that serves the generated OpenAPI JSON document at runtime.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Document}
 \begin{itemize}
     \item In .NET 8, `AddEndpointsApiExplorer()' was needed for Swashbuckle to detect minimal API endpoints. 
     \item In .NET 10, the framework automatically generates OpenAPI metadata at build-time.
     \pause
-    \item This also applies to controllers!
+    \item \textbf{The same simplicity applies to controllers}!
 \end{itemize}
 \begin{center}
     \includegraphics[scale=0.2]{Images/carbon (5).png}
@@ -197,11 +193,11 @@ app.Run();
 \end{itemize}
 Or have the document created in your codebase!
 \begin{center}
-    \includegraphics[scale=0.2]{Images/buildGeneration.png}
+    \includegraphics[scale=0.17]{Images/buildGeneration.png}
 \end{center}
 \end{frame}
 
-\begin{frame}{OpenAPI Changes in .NET 10}
+\begin{frame}[fragile]{OpenAPI Changes in .NET 10}
 \begin{itemize}
     \item \textbf{OpenAPI generator defaults to 3.1}
     \item Key Benefits:
@@ -210,6 +206,15 @@ Or have the document created in your codebase!
             \item Stronger type validation
             \item Clearer required/optional fields
         \end{itemize}
+        \pause
+    \item Example;
+    \begin{itemize}
+        \item v3.0; Nullable types required separate "nullable": true property.
+        \item v3.1; Fully JSON Schema compliant:
+        \begin{codebox}
+            "type": ["string", "null"]
+        \end{codebox}
+    \end{itemize}
 \end{itemize}
 \end{frame}
 
@@ -219,8 +224,23 @@ Or have the document created in your codebase!
     \item You however want to stick to 3.0 when working with API Management 
 \end{itemize}
 \begin{center}
-    \includegraphics[scale=0.2]{Images/carbon.png}
+    \includegraphics[scale=0.42]{Images/APIM.png}
 \end{center}
+\end{frame}
+
+\begin{frame}{OpenAPI Changes in .NET 10}
+\begin{itemize}
+    \item \textbf{OpenAPI generator defaults to 3.1}
+    \item You however want to stick to 3.0 when working with API Management 
+\end{itemize}
+\begin{center}
+    \includegraphics[scale=0.18]{Images/carbon.png}
+\end{center}
+\pause
+\begin{itemize}
+    \item Possibly with \textbf{schema transformers} \newline
+    to add missing attributes
+\end{itemize}
 \end{frame}
 
 
@@ -228,57 +248,41 @@ Or have the document created in your codebase!
 
 
 \begin{frame}[fragile]{Transformers}
-Three kinds of Transformers can be used within builder.Services.AddOpenApi
+Nice, we are now generating docs using v3.0 or v3.1. \newline \newline
+
+Three kinds of Transformers can be used within builder.Services.AddOpenApi to tweak documents
 
 \begin{codebox}
-    AddDocumentTransformer(),
     AddSchemaTransformer(),
     AddOperationTransformer()
+    AddDocumentTransformer(),
 \end{codebox}
 
 \end{frame}
 
 \begin{frame}[fragile]{Document Transformers}
-Applies transformations globally. Set title, description, version, etc
-\begin{codebox}
-builder.Services.AddOpenApi("admin", options =>
-{
-    options.AddDocumentTransformer((document, _, _) =>
-        {
-            document.Info.Title = "Admin API";
-            document.Info.Description = "Internal endpoints";
-
-            return Task.CompletedTask;
-        });
-});
-\end{codebox}
-
+\begin{itemize}
+    \item \textbf{AddSchemaTransformer}
+    Applies transformations per schema. Adjust data type, apply constraints, add description.
+    \pause
+    \item \textbf{AddOperationTransformer}
+    Applies transformations per operation. Set tags, deprecations, etc. \newline  
+    You can also define which endpoints should be included in an OpenAPI document.
+    \pause
+    \item \textbf{AddDocumentTransformer}
+    Applies transformations globally. Set title, description, version, etc.
+\end{itemize}
 \end{frame}
 
-
-\begin{frame}[fragile]{Operation Transformers}
-Applies transformations per operation. Set tags, deprecations, etc
-
-\begin{codebox}
-    options.AddOperationTransformer((operation, context, _) =>
-    {
-        if (context.Description.RelativePath!.EndsWith("/v1"))
-        {
-            operation.Deprecated = true;
-        }
-        return Task.CompletedTask;
-    });
-\end{codebox}
+\begin{frame}[fragile]{Document Transformers}
+Short demo
+\begin{itemize}
+    \item Group endpoints; Publicly available versus Admin
+    \item Group endpoints; V1 versus V2
+\end{itemize}
 \end{frame}
 
-
-\begin{frame}[fragile]{Schema Transformers}
-Applies transformations per schema. Adjust data type, apply constraints, add description
-
-Or determine which endpoints should be included in the Openapi spec.
-\end{frame}
-
-\section{Openapi UI}
+\section{OpenAPI UI}
 \tussenslide{OpenAPI UI}
 
 \begin{frame}{Interacting with the APIs}
@@ -324,18 +328,25 @@ Comes with a \textbf{code snippet generator}.
 \end{frame}
 
 \begin{frame}[fragile]{Using Scalar}
-\begin{codebox}
-using Scalar.AspNetCore;
+\begin{center}
+    \includegraphics[scale=0.23]{Images/Scalar.png}
+\end{center}
+\end{frame}
 
-(...)
-
-app.MapScalarApiReference(options =>
-{
-    options
-        .WithTitle("My API")
-        .WithTheme(ScalarTheme.Blue);
-});
-\end{codebox}
+\begin{frame}[fragile]{Using Scalar}
+\begin{itemize}
+    \item Short demo
+    \begin{itemize}
+        \item Smooth endpoint interactions
+        \item Code snippets
+    \end{itemize}
+\end{itemize}
+\pause
+Can also handle
+\begin{itemize}
+    \item OAuth authentication
+    \item Be scoped to specific endpoints (User/Admin etc)
+\end{itemize}
 \end{frame}
 
 \section{Takeaways}
@@ -348,10 +359,13 @@ app.MapScalarApiReference(options =>
 \begin{frame}{Key Takeaways}
 \begin{itemize}
   \item Native OpenAPI is lighter and more flexible
+  \begin{itemize}
+      \item Enforce Openapi v3.0 for API Management
+  \end{itemize}
   \item Document and endpoint transformers allow us to tailor our OpenApi specs
   \begin{itemize}
       \item Only public/private APIs in document
-      \item Mark API deprecated
+      \item Mark APIs as deprecated
   \end{itemize}
   \item Swagger can still be used; however, I recommend breaking up and using Scalar.
 \end{itemize}
@@ -361,8 +375,10 @@ app.MapScalarApiReference(options =>
 \begin{itemize}
   \item OpenAPI generated at build-time without reflection
   \item Transformers allow you to tweak the document
-  \item UI renders the experience
+  \item UI renders the experience, various options available
 \end{itemize}
 \end{frame}
+
+\titlepagecustom
 
 \end{document}
