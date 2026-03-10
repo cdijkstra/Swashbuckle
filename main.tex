@@ -16,14 +16,15 @@
   \par
   \vspace{0.5em}
 }
+\setbeamertemplate{mini frames}{}
 
-\geometry{paperwidth=480, paperheight=270pt}
+\geometry{paperwidth=16cm, paperheight=9cm}
 
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{graphicx} 
 \usepackage{tikz}
-\usepackage{xcolor}
+\usepackage{xcolor, emoji}
 \usepackage{tcolorbox}
 \usepackage{animate}
 \usepackage{xstring} % for substring handling
@@ -41,12 +42,25 @@
 
 \definecolor{darkgreen}{RGB}{0,100,0} % darker than default green
 
-\logo{\includegraphics[height=0.6cm]{Images/cloudRepublic.png}}
+% \logo{\includegraphics[height=0.6cm]{Images/cloudRepublic.png}}
+
+\setbeamertemplate{frametitle}{
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north east, xshift=-0.3cm, yshift=-0.7cm] 
+    at (current page.north east)
+    {\includegraphics[height=0.8cm]{Images/cloudRepublic.png}};
+  \end{tikzpicture}
+
+  \vspace{0.8em}
+  {\usebeamerfont{frametitle}\bfseries\Large\insertframetitle}
+  \par
+  \vspace{0.5em}
+}
 
 \lstset{
-  emph={AddOpenApi,MapOpenApi,AddDocumentTransformer,AddOperationTransformer,AddSchemaTransformer},
+  emph={AddOpenAPI,MapOpenAPI,AddDocumentTransformer,AddOperationTransformer,AddSchemaTransformer},
   emphstyle=\color{blue}\bfseries,
-  emph={[2]AddEndpointsApiExplorer,AddSwaggerGen,UseSwagger,UseSwaggerUI,WithOpenApi},
+  emph={[2]AddEndpointsApiExplorer,AddSwaggerGen,UseSwagger,UseSwaggerUI,WithOpenAPI},
   emphstyle={[2]\color{darkgreen}\bfseries},
   backgroundcolor=\color{codegray},
   basicstyle=\ttfamily\small,
@@ -59,31 +73,36 @@
 \title{Farewell Swashbuckle}
 \subtitle{Navigating .NET 10’s New OpenAPI Waters}
 \author{Casper Dijkstra}
-\date{February 27th, 2026}
+\date{March 10th, 2026}
 
 \begin{document}
 
-\titlepagecustom
+% \titlepagecustom
+
+\titlepagecustomWithPicture
 
 \section{Setting the scene}
 
-\begin{frame}{Swashbuckle – The Good}
+\begin{frame}{Swashbuckle – The Good \emoji{thumbsup}
+}
 Swashbuckle
 \begin{itemize}
-    \item Popular NuGet package for .NET
+    \item Popular OpenAPI NuGet package for .NET
     \item \textbf{Shipped by default} in project templates before .NET 9
     \pause
     \item Two responsibilities
     \begin{itemize}
         \item \textbf{Generates OpenAPI specs} (called "Swagger" specs)
-        \item Hosts the famous \textbf{Swagger UI}
+        \item Hosts the widely used \textbf{Swagger UI}
     \end{itemize}
-    \item Works with Minimal APIs and Controllers.
+    \pause
+    \item Supports both Minimal APIs and Controllers \emoji{rocket}
+
 \end{itemize}
 \end{frame}
 
 
-\begin{frame}{Swashbuckle – The Bad}
+\begin{frame}{Swashbuckle – The Bad \emoji{thumbsdown}}
 Swashbuckle
 \begin{itemize}
     \item Relies on \textbf{reflection} to inspect \textit{controllers, endpoints, models}
@@ -92,93 +111,102 @@ Swashbuckle
 \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{Swashbuckle – The Status}
-Swashbuckle
+\begin{frame}[fragile]{My Relationship with Swashbuckle \emoji{heart}}
 \begin{itemize}
-    \item No longer shipped by default in .NET
-    \item \textit{Can} still be included in  your projects
-    \pause
-    \item But let's break old habits ;) 
+    \item We've had great years together
 \end{itemize}
-
-\begin{codebox}
-Farewell Swashbuckle
-
-We're breaking up.
-It's not you, it's me... 
-Actually, it's .NET 10.
-\end{codebox}
 \end{frame}
 
-\begin{frame}[fragile]{.NET 9 Changed the Defaults}
+\begin{frame}[fragile]{My Relationship with Swashbuckle \emoji{thinking-face}}
+\begin{itemize}
+    \item We've had some great years together
+    \item But things changed with .NET 10...
+        \begin{itemize}
+        \item You can be so complicated...
+        \item Native OpenAPI is faster
+        \item Documentation just looks better with Scalar
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{My Relationship with Swashbuckle \emoji{broken-heart}}
+\begin{codebox}
+Dear Swashbuckle,
+
+We've had a great run together.
+
+But I think we should start seeing other libraries.
+
+It's not you...
+It's .NET 10.
+
+(and Scalar)
+\end{codebox}
+
+\end{frame}
+
+\begin{frame}[fragile]{My new fling \emoji{heart}}
     \begin{itemize}
       \item \textbf{OpenAPI Docs} are now generated natively.
-    
-      \item NuGet
+
           \begin{verbatim}
-              Microsoft.AspNetCore.OpenApi
+              Microsoft.AspNetCore.OpenAPI
           \end{verbatim}
-        was introduced in the ASP.NET Core shared framework in .NET 9
+      \item Introduced in the ASP.NET Core shared framework in .NET 9
     \pause
-     \item \textbf{OpenAPI UI}: Microsoft intentionally stopped shipping a UI out of the box.
+     \item \textbf{OpenAPI UI}: Microsoft intentionally stopped shipping a default UI.
     \end{itemize} 
 \end{frame}
 
-\section{Document generation}
+\section{Code-Driven API Specs}
 \tussenslide{OpenAPI Generation}
 
-\begin{frame}[fragile]{Minimal OpenAPI Setup (.NET 8)}
+\begin{frame}[fragile]{OpenAPI Setup (.NET 8)}
 \begin{center}
     \includegraphics[scale=0.18]{Images/net8.png}
 \end{center}
 \end{frame}
 
-\begin{frame}{Minimal OpenAPI Setup (.NET 8)}
+\begin{frame}{OpenAPI Setup .NET 8}
 \begin{itemize}
-    \item AddEndpointsApiExplorer() → Discovers Minimal API endpoints and exposes their metadata for tools like OpenAPI.
+    \item AddEndpointsApiExplorer() → \textbf{Discovers} Minimal API + expose metadata
 
-  \item AddSwaggerGen() → Generates the OpenAPI/Swagger JSON document at runtime using reflection.
+  \item AddSwaggerGen() → \textbf{Generates} OpenAPI/Swagger document at \runtime using reflection.
 
-  \item UseSwagger() → Serves the generated OpenAPI JSON document over HTTP.
+  \item UseSwagger() → \textbf{Serves} the generated \textbf{OpenAPI JSON} document over HTTP.
 
-  \item UseSwaggerUI() → Serves the interactive Swagger UI to browse and test the API.
+  \item UseSwaggerUI() → \textbf{Serves} the interactive \textbf{Swagger UI{}} to interact with APIs.
 \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{Minimal OpenAPI Setup (.NET 10)}
-\begin{center}
+\begin{frame}[fragile]{OpenAPI Setup .NET 10}
+\begin{columns}[c]
+    \column{0.45\textwidth}
+    \centering
+    \includegraphics[scale=0.2]{Images/net8.png}
+
+    \column{0.45\textwidth}
+    \centering
     \includegraphics[scale=0.2]{Images/net10.png}
-\end{center}
+\end{columns}
 \end{frame}
 
 \begin{frame}{Minimal OpenAPI Setup (.NET 10)}
 \begin{itemize}
-    \item AddOpenApi() → Registers OpenAPI document generation and optional transformers for Minimal APIs or controllers.
+    \item AddOpenAPI() → \textbf{Registers} OpenAPI document generation and optional transformers for Minimal APIs or controllers.
 
-  \item MapOpenApi() → Maps an endpoint that serves the generated OpenAPI JSON document at runtime.
+  \item MapOpenAPI() → \textbf{Serves} the generated \textbf{OpenAPI JSON} document.
 \end{itemize}
-\end{frame}
-
-\begin{frame}{Document}
-\begin{itemize}
-    \item In .NET 8, `AddEndpointsApiExplorer()' was needed for Swashbuckle to detect minimal API endpoints. 
-    \item In .NET 10, the framework automatically generates OpenAPI metadata at build-time.
-    \pause
-    \item \textbf{The same simplicity applies to controllers}!
-\end{itemize}
-\begin{center}
-    \includegraphics[scale=0.2]{Images/carbon (5).png}
-\end{center}
 \end{frame}
 
 \begin{frame}[fragile]{OpenAPI specs}
 \begin{itemize}
     \item .NET 8 \begin{codebox}
-        OpenApi: (...)/swagger/v1/swagger.json
+        OpenAPI: (...)/swagger/v1/swagger.json
         UI: (...)/swagger/index.html
     \end{codebox}
     \item .NET 10 \begin{codebox}
-        OpenApi: (...)/openapi/v1.json
+        OpenAPI: (...)/OpenAPI/v1.json
         UI: [404]
     \end{codebox}
 \end{itemize}
@@ -187,14 +215,16 @@ Actually, it's .NET 10.
 \begin{frame}[fragile]{OpenAPI specs}
 \begin{itemize}
     \item .NET 10 \begin{codebox}
-        OpenApi: (...)/openapi/v1.json
+        OpenAPI: (...)/OpenAPI/v1.json
         UI: [404]
     \end{codebox}
 \end{itemize}
-Or have the document created in your codebase!
-\begin{center}
-    \includegraphics[scale=0.17]{Images/buildGeneration.png}
-\end{center}
+Or have your OpenAPI document created in your codebase at build-time!
+\begin{codebox}
+    <!-- Configure build-time OpenAPI generation to produce an OpenAPI 3.1 document -->
+<OpenAPIGenerateDocumentsOptions>--OpenAPI-version OpenAPI3_1</OpenAPIGenerateDocumentsOptions>
+<OpenAPIDocumentsDirectory>OpenAPI</OpenAPIDocumentsDirectory>
+\end{codebox}
 \end{frame}
 
 \begin{frame}[fragile]{OpenAPI Changes in .NET 10}
@@ -221,7 +251,7 @@ Or have the document created in your codebase!
 \begin{frame}{OpenAPI Changes in .NET 10}
 \begin{itemize}
     \item \textbf{OpenAPI generator defaults to 3.1}
-    \item You however want to stick to 3.0 when working with API Management 
+    \item You however want to stick to 3.0 when working with Azure API Management 
 \end{itemize}
 \begin{center}
     \includegraphics[scale=0.42]{Images/APIM.png}
@@ -238,44 +268,24 @@ Or have the document created in your codebase!
 \end{center}
 \pause
 \begin{itemize}
-    \item Possibly with \textbf{schema transformers} \newline
-    to add missing attributes
+    \item Possibly with \textbf{transformers} to add missing attributes
 \end{itemize}
 \end{frame}
-
-
-\tussenslide{Transformers}
-
 
 \begin{frame}[fragile]{Transformers}
 Nice, we are now generating docs using v3.0 or v3.1. \newline \newline
 
-Three kinds of Transformers can be used within builder.Services.AddOpenApi to tweak documents
+Three kinds of Transformers can be used within builder.Services.AddOpenAPI to tweak documents
 
 \begin{codebox}
-    AddSchemaTransformer(),
-    AddOperationTransformer()
     AddDocumentTransformer(),
+    AddOperationTransformer(),
+    AddSchemaTransformer()
 \end{codebox}
 
 \end{frame}
 
-\begin{frame}[fragile]{Document Transformers}
-\begin{itemize}
-    \item \textbf{AddSchemaTransformer}
-    Applies transformations per schema. Adjust data type, apply constraints, add description.
-    \pause
-    \item \textbf{AddOperationTransformer}
-    Applies transformations per operation. Set tags, deprecations, etc. \newline  
-    You can also define which endpoints should be included in an OpenAPI document.
-    \pause
-    \item \textbf{AddDocumentTransformer}
-    Applies transformations globally. Set title, description, version, etc.
-\end{itemize}
-\end{frame}
-
-\begin{frame}[fragile]{Document Transformers}
-Short demo
+\begin{frame}[fragile]{Short demo}
 \begin{itemize}
     \item Group endpoints; Publicly available versus Admin
     \item Group endpoints; V1 versus V2
@@ -289,12 +299,12 @@ Short demo
 \begin{itemize}
   \item Separation of concerns:
     \begin{itemize}
-      \item OpenAPI document generation
-      \item UI and presentation
+      \item OpenAPI document generation \emoji{check-mark}
+      \item User-friendly UI and interaction \emoji{thinking-face}
     \end{itemize}
   \pause
   \item Swagger UI is just one OpenAPI consumer
-  \item You choose the UI that fits your team
+  \item You choose the UI that fits your team!
 \end{itemize}
 \end{frame}
 
@@ -303,9 +313,9 @@ Short demo
     \item \textcolor{darkgreen}{Swagger UI} (still works)
 \end{enumerate}
 \begin{center}
-    \includegraphics[scale=0.22]{Images/swaggerUi.png}
+    \includegraphics[scale=0.22]{Images/carbon (9).png}
 \end{center}
-Import the SwaggerUI-specific package and pass it your openapi file.
+Import the SwaggerUI-specific package and pass it your OpenAPI file.
 \end{frame}
 
 \begin{frame}{UI Options}
@@ -327,18 +337,21 @@ Modern, clean \textbf{interactive UI}.
 Comes with a \textbf{code snippet generator}.
 \end{frame}
 
-\begin{frame}[fragile]{Using Scalar}
+\begin{frame}[fragile]{My favorite; Scalar 
+\emoji{heart}}
 \begin{center}
     \includegraphics[scale=0.23]{Images/Scalar.png}
 \end{center}
 \end{frame}
 
-\begin{frame}[fragile]{Using Scalar}
+\begin{frame}[fragile]{My favorite; Scalar 
+\emoji{heart}}
 \begin{itemize}
     \item Short demo
     \begin{itemize}
         \item Smooth endpoint interactions
         \item Code snippets
+        \item Scales well with many APIs and big payloads
     \end{itemize}
 \end{itemize}
 \pause
@@ -350,35 +363,31 @@ Can also handle
 \end{frame}
 
 \section{Takeaways}
-\begin{frame}
-    \begin{center}
-        \includegraphics[scale=0.2]{Images/goodbye.png}
-    \end{center}
-\end{frame}
-
 \begin{frame}{Key Takeaways}
 \begin{itemize}
   \item Native OpenAPI is lighter and more flexible
   \begin{itemize}
-      \item Enforce Openapi v3.0 for API Management
+      \item OpenAPI generated at build-time without reflection
+      \item Enforce OpenAPI v3.0 for API Management
   \end{itemize}
-  \item Document and endpoint transformers allow us to tailor our OpenApi specs
+  \item Transformers allow us to tailor our OpenAPI specifications.
   \begin{itemize}
       \item Only public/private APIs in document
-      \item Mark APIs as deprecated
   \end{itemize}
   \item Swagger can still be used; however, I recommend breaking up and using Scalar.
+  \begin{itemize}
+      \item Modern features
+      \item Stays performant
+  \end{itemize}
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Key Takeaways}
-\begin{itemize}
-  \item OpenAPI generated at build-time without reflection
-  \item Transformers allow you to tweak the document
-  \item UI renders the experience, various options available
-\end{itemize}
+\begin{frame}
+    \begin{center}
+        \includegraphics[scale=0.23]{Images/goodbyeswashbuckle.png}
+    \end{center}
 \end{frame}
 
-\titlepagecustom
+\titlepagecustomWithPicture
 
 \end{document}

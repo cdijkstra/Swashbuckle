@@ -62,9 +62,50 @@
 
 {\color{white}\large \insertauthor}
 
-\vspace{0.5em}
+\vspace{0.9em}
 
 {\color{white}\small \insertdate}
+
+\vspace{0.9em}
+
+\includegraphics[scale=0.2]{Images/Logo wit.png}
+
+\vfill
+\end{frame}
+
+\usebackgroundtemplate{} % reset background
+}
+}
+
+\newcommand{\titlepagecustomWithPicture}{
+{
+\usebackgroundtemplate{
+    \includegraphics[
+        width=\paperwidth,
+        height=\paperheight
+    ]{Images/tussenslide.png}
+}
+
+\begin{frame}[plain]
+
+\vfill
+\centering
+
+{\color{white}\Huge\bfseries \inserttitle}
+
+\vspace{0.8em}
+
+{\color{BrandAccent}\large \insertsubtitle}
+
+\vspace{2em}
+
+{\color{white}\large \insertauthor}
+
+\vspace{0.7em}
+
+\includegraphics[scale=0.2]{Images/casper.jpg}
+
+\vspace{0.7em}
 
 \includegraphics[scale=0.2]{Images/Logo wit.png}
 
